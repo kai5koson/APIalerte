@@ -1,446 +1,1192 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Météo Marine - Deauville</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #0ea5e9;
+            --accent: #0284c7;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --text-light: #f1f5f9;
+            --text-dark: #334155;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+            --wave-pattern: #dbeafe;
+            --danger: #dc2626;
+            --warning: #f97316;
+            --success: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
-        header {
-            background-color: #0077b6;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        main {
-            padding: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #0077b6;
-            color: white;
-        }
-        footer {
-            text-align: center;
-            padding: 10px;
-            background-color: #0077b6;
-            color: white;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-        .niveau-rouge {
-            background-color: #ffcccb;
-        }
-        .niveau-orange {
-            background-color: #ffe4b5;
-        }
-        .niveau-jaune {
-            background-color: #fffacd;
-        }
-        .form-container {
-            margin-top: 30px;
-            padding: 20px;
-            background-color: #e0f7fa;
-            border-radius: 8px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input, textarea, select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #0077b6;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #005f8d;
-        }
-        .actions {
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.5;
+            position: relative;
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
+        }
+
+        /* Header avec vagues */
+        .wave-container {
+            position: relative;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: var(--text-light);
+            padding: 3rem 2rem 6rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .wave-container h1 {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+            text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .wave-container p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" fill="%23ffffff" /></svg>');
+            background-size: cover;
+        }
+
+        /* Main content */
+        main {
+            flex: 1;
+            padding: 0 1.5rem;
+            max-width: 1100px;
+            margin: -3rem auto 4rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(to right, var(--accent), var(--secondary));
+            color: var(--text-light);
+            padding: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card-header i {
+            font-size: 1.8rem;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        /* Alerte Table */
+        .alerte-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .alerte-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1.5rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .alerte-row:last-child {
+            border-bottom: none;
+        }
+
+        .alerte-label {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .alerte-value {
+            font-size: 1.1rem;
+        }
+
+        .alerte-type {
+            font-weight: 700;
+            color: #e11d48;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alerte-description {
+            line-height: 1.6;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            gap: 10px;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+            color: var(--secondary);
+            font-size: 1.5rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Status Card */
+        .status-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .status-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .status-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .status-text {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            padding: 2rem 1rem;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .social-icons a {
+            color: var(--text-light);
+            font-size: 1.5rem;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+        }
+
+        .social-icons a:hover {
+            opacity: 1;
+            transform: translateY(-3px);
+        }
+
+        /* Extra elements */
+        .tag {
+            display: inline-block;
+            background-color: #22c55e;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .error {
+            background-color: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* CRUD Buttons */
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
             gap: 5px;
+            transition: all 0.2s ease;
+            border: none;
         }
-        .btn-edit, .btn-delete {
-            padding: 5px 10px;
-            font-size: 0.8em;
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--text-light);
         }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: var(--text-light);
+        }
+
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--text-light);
+        }
+
+        .btn-warning:hover {
+            background-color: #ea580c;
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: var(--text-light);
+        }
+
+        .btn-success:hover {
+            background-color: #16a34a;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(to right, var(--accent), var(--secondary));
+            color: var(--text-light);
+            padding: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23334155'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+            padding-right: 2.5rem;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .modal-footer {
+            padding: 1rem 2rem 2rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 350px;
+        }
+
+        .toast {
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease forwards;
+            color: white;
+        }
+
+        .toast.success {
+            background-color: var(--success);
+        }
+
+        .toast.error {
+            background-color: var(--danger);
+        }
+
+        .toast.warning {
+            background-color: var(--warning);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .alerte-container {
+            position: relative;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alerte-container:last-child {
+            margin-bottom: 0;
+        }
+
+        .alerte-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
         .btn-edit {
-            background-color: #4caf50;
+            background-color: var(--warning);
+            color: white;
         }
+
+        .btn-edit:hover {
+            background-color: #ea580c;
+        }
+
         .btn-delete {
-            background-color: #f44336;
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background-color: #b91c1c;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .wave-container h1 {
+                font-size: 2rem;
+            }
+
+            .wave-container p {
+                font-size: 1rem;
+            }
+
+            .alerte-row {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+
+            .modal {
+                max-width: 95%;
+            }
+        }
+
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .admin-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .admin-mode-indicator {
+            position: fixed;
+            bottom: 25px;
+            right: 80px;
+            background-color: var(--accent);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: all 0.3s ease;
+        }
+
+        .admin-mode-indicator.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .admin-controls {
+            margin-bottom: 2rem;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .admin-controls.active {
+            opacity: 1;
+            height: auto;
+        }
+
+        .add-alerte-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .add-alerte-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-alerte-btn i {
+            font-size: 1.1rem;
+        }
+
+        .confirmation-dialog {
+            background-color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .confirmation-icon {
+            font-size: 3rem;
+            color: var(--danger);
+            margin-bottom: 1rem;
+        }
+
+        .confirmation-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--danger);
+        }
+
+        .confirmation-message {
+            margin-bottom: 2rem;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        .confirmation-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
         }
     </style>
 </head>
+
 <body>
-    <header>
-        <h1>Météo Marine - Deauville</h1>
-        <p>Consultez les alertes marines pour la ville de Deauville</p>
+    <header class="wave-container">
+        <h1>Météo Marine Deauville</h1>
+        <p>Consultez en temps réel les alertes météorologiques marines et préparez vos sorties en mer en toute sécurité
+        </p>
+        <div class="wave"></div>
     </header>
+
     <main>
-        <h2>Prochaines Alertes</h2>
-        <div id="alertes-container">
-            <table id="alertes-table">
-                <thead>
-                    <tr>
-                        <th>Type d'Alerte</th>
-                        <th>Niveau</th>
-                        <th>Description</th>
-                        <th>Zone</th>
-                        <th>Début</th>
-                        <th>Fin</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="alertes-body">
-                    <!-- Les alertes seront ajoutées ici dynamiquement -->
-                </tbody>
-            </table>
+        <div class="admin-controls">
+            <button class="add-alerte-btn" id="add-alerte-btn">
+                <i class="fas fa-plus"></i>
+                Ajouter une alerte
+            </button>
         </div>
-        
-        <div class="form-container" id="form-container">
-            <h3 id="form-title">Ajouter une nouvelle alerte</h3>
-            <form id="alerte-form">
-                <input type="hidden" id="alerte-id">
-                <div class="form-group">
-                    <label for="alerte-type">Type d'Alerte:</label>
-                    <input type="text" id="alerte-type" required>
+
+        <div class="dashboard">
+            <!-- Alerte Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Alertes en cours
                 </div>
-                <div class="form-group">
-                    <label for="alerte-niveau">Niveau:</label>
-                    <select id="alerte-niveau" required>
-                        <option value="Rouge">Rouge</option>
-                        <option value="Orange">Orange</option>
-                        <option value="Jaune">Jaune</option>
-                    </select>
+                <div class="card-body">
+                    <div id="alerte-content">
+                        <div class="loading">
+                            <i class="fas fa-spinner"></i>
+                            <span>Chargement des données...</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="alerte-description">Description:</label>
-                    <textarea id="alerte-description" required></textarea>
+            </div>
+
+            <!-- Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-info-circle"></i>
+                    Statut du service
                 </div>
-                <div class="form-group">
-                    <label for="alerte-zone">Zone:</label>
-                    <input type="text" id="alerte-zone" required>
+                <div class="card-body">
+                    <div class="status-card">
+                        <div class="status-icon">
+                            <i class="fas fa-broadcast-tower"></i>
+                        </div>
+                        <h3 class="status-title">Service actif</h3>
+                        <p class="status-text">Nos systèmes de surveillance météo fonctionnent normalement et
+                            transmettent les données en temps réel.</p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="alerte-debut">Début:</label>
-                    <input type="datetime-local" id="alerte-debut" required>
-                </div>
-                <div class="form-group">
-                    <label for="alerte-fin">Fin:</label>
-                    <input type="datetime-local" id="alerte-fin" required>
-                </div>
-                <button type="submit" id="form-submit">Ajouter</button>
-                <button type="button" id="form-cancel" style="display: none;">Annuler</button>
-            </form>
+            </div>
         </div>
     </main>
+
     <footer>
-        <p>&copy; 2025 Météo Marine Deauville. Tous droits réservés.</p>
+        <div class="footer-content">
+            <div class="social-icons">
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-linkedin"></i></a>
+            </div>
+            <p>&copy; 2023-2025 Météo Marine Deauville - Tous droits réservés</p>
+        </div>
     </footer>
 
+    <!-- Admin Mode Toggle Button -->
+    <div class="admin-toggle" id="admin-toggle">
+        <i class="fas fa-cog"></i>
+    </div>
+    <div class="admin-mode-indicator" id="admin-mode-indicator">Mode Admin</div>
+
+    <!-- Modal pour ajouter/modifier une alerte -->
+    <div class="modal-overlay hidden" id="alerte-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="modal-title">Ajouter une alerte</span>
+                <button class="modal-close" id="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="alerte-form">
+                    <input type="hidden" id="alerte-id">
+                    <div class="form-group">
+                        <label for="alerte-type">Type d'alerte</label>
+                        <input type="text" id="alerte-type" class="form-control" required
+                            placeholder="Ex: Vague de tempête">
+                    </div>
+                    <div class="form-group">
+                        <label for="alerte-niveau">Niveau</label>
+                        <select id="alerte-niveau" class="form-control" required>
+                            <option value="">Choisir un niveau</option>
+                            <option value="Vert">Vert</option>
+                            <option value="Orange">Orange</option>
+                            <option value="Rouge">Rouge</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="alerte-zone">Zone</label>
+                        <input type="text" id="alerte-zone" class="form-control" required
+                            placeholder="Ex: Côte Normande">
+                    </div>
+                    <div class="form-group">
+                        <label for="alerte-debut">Date et heure de début</label>
+                        <input type="datetime-local" id="alerte-debut" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="alerte-fin">Date et heure de fin</label>
+                        <input type="datetime-local" id="alerte-fin" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="alerte-description">Description</label>
+                        <textarea id="alerte-description" class="form-control" required
+                            placeholder="Description détaillée de l'alerte..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="modal-cancel">Annuler</button>
+                <button type="button" class="btn btn-primary" id="modal-save">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmation de suppression -->
+    <div class="modal-overlay hidden" id="confirmation-modal">
+        <div class="confirmation-dialog">
+            <div class="confirmation-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 class="confirmation-title">Confirmer la suppression</h3>
+            <p class="confirmation-message">Êtes-vous sûr de vouloir supprimer cette alerte ? Cette action est
+                irréversible.</p>
+            <div class="confirmation-actions">
+                <button class="btn btn-primary" id="cancel-delete">Annuler</button>
+                <button class="btn btn-danger" id="confirm-delete">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
-        // Configuration de l'API - URL de l'API déployée sur Render
-        const API_URL = 'https://apialerteback.onrender.com/';
-        
-        // Éléments du DOM
-        const alertesBody = document.getElementById('alertes-body');
-        const alerteForm = document.getElementById('alerte-form');
-        const formTitle = document.getElementById('form-title');
-        const formSubmit = document.getElementById('form-submit');
-        const formCancel = document.getElementById('form-cancel');
-        const formContainer = document.getElementById('form-container');
-        
-        // Formatage de date pour l'affichage
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-        }
-        
-        // Formatage de date pour les champs datetime-local
-        function formatDateForInput(dateString) {
-            const date = new Date(dateString);
-            return date.toISOString().slice(0, 16);
-        }
-        
-        // Fonction pour tester la connexion à l'API
-        async function testApiConnection() {
-            try {
-                console.log('Test de connexion à l\'API...');
-                const response = await fetch(API_URL, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                console.log('Statut de la réponse:', response.status);
-                if (response.ok) {
-                    console.log('Connexion à l\'API réussie!');
-                    return true;
-                } else {
-                    console.error('Échec de connexion à l\'API:', response.status);
-                    return false;
-                }
-            } catch (error) {
-                console.error('Erreur lors du test de connexion à l\'API:', error);
-                return false;
-            }
-        }
-        
-        // Fonction pour charger les alertes depuis l'API
-        async function loadAlertes() {
-            try {
-                // Tester la connexion d'abord
-                const connectionSuccess = await testApiConnection();
-                if (!connectionSuccess) {
-                    alertesBody.innerHTML = '<tr><td colspan="7">Impossible de se connecter à l\'API. Veuillez vérifier que le serveur API est en cours d\'exécution.</td></tr>';
-                    return;
-                }
-                
-                const response = await fetch(API_URL);
-                const alertes = await response.json();
-                
-                // Vider le tableau
-                alertesBody.innerHTML = '';
-                
-                if (alertes.length === 0) {
-                    alertesBody.innerHTML = '<tr><td colspan="7">Aucune alerte disponible</td></tr>';
-                    return;
-                }
-                
-                // Ajouter chaque alerte au tableau
-                alertes.forEach(alerte => {
-                    const row = document.createElement('tr');
-                    row.classList.add(`niveau-${alerte.niveau.toLowerCase()}`);
-                    
-                    row.innerHTML = `
-                        <td>${alerte.alerte}</td>
-                        <td>${alerte.niveau}</td>
-                        <td>${alerte.description}</td>
-                        <td>${alerte.zone}</td>
-                        <td>${formatDate(alerte.debut)}</td>
-                        <td>${formatDate(alerte.fin)}</td>
-                        <td class="actions">
-                            <button class="btn-edit" data-id="${alerte.id}">Modifier</button>
-                            <button class="btn-delete" data-id="${alerte.id}">Supprimer</button>
-                        </td>
-                    `;
-                    
-                    alertesBody.appendChild(row);
-                });
-                
-                // Ajouter les gestionnaires d'événements pour les boutons
-                document.querySelectorAll('.btn-edit').forEach(button => {
-                    button.addEventListener('click', () => editAlerte(button.dataset.id));
-                });
-                
-                document.querySelectorAll('.btn-delete').forEach(button => {
-                    button.addEventListener('click', () => deleteAlerte(button.dataset.id));
-                });
-            } catch (error) {
-                console.error('Erreur lors du chargement des alertes:', error);
-                alertesBody.innerHTML = `<tr><td colspan="7">Erreur lors du chargement des alertes: ${error.message}</td></tr>`;
-            }
-        }
-        
-        // Fonction pour ajouter une nouvelle alerte
-        async function addAlerte(event) {
-            event.preventDefault();
-            
-            const alerteData = {
-                alerte: document.getElementById('alerte-type').value,
-                niveau: document.getElementById('alerte-niveau').value,
-                description: document.getElementById('alerte-description').value,
-                zone: document.getElementById('alerte-zone').value,
-                debut: document.getElementById('alerte-debut').value,
-                fin: document.getElementById('alerte-fin').value
-            };
-            
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(alerteData)
-                });
-                
-                if (response.ok) {
-                    alerteForm.reset();
-                    loadAlertes();
-                } else {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Erreur lors de l\'ajout de l\'alerte');
-                }
-            } catch (error) {
-                console.error('Erreur lors de l\'ajout de l\'alerte:', error);
-                alert('Impossible d\'ajouter l\'alerte. Veuillez réessayer plus tard.');
-            }
-        }
-        
-        // Fonction pour charger une alerte dans le formulaire pour édition
-        async function editAlerte(id) {
-            try {
-                const response = await fetch(`${API_URL}?id=${id}`);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                const alerte = await response.json();
-                
-                document.getElementById('alerte-id').value = alerte.id;
-                document.getElementById('alerte-type').value = alerte.alerte;
-                document.getElementById('alerte-niveau').value = alerte.niveau;
-                document.getElementById('alerte-description').value = alerte.description;
-                document.getElementById('alerte-zone').value = alerte.zone;
-                document.getElementById('alerte-debut').value = formatDateForInput(alerte.debut);
-                document.getElementById('alerte-fin').value = formatDateForInput(alerte.fin);
-                
-                formTitle.textContent = 'Modifier l\'alerte';
-                formSubmit.textContent = 'Mettre à jour';
-                formCancel.style.display = 'inline-block';
-                
-                // Changer la fonction de soumission du formulaire
-                alerteForm.removeEventListener('submit', addAlerte);
-                alerteForm.addEventListener('submit', updateAlerte);
-                
-                // Faire défiler jusqu'au formulaire - avec vérification que formContainer existe
-                if (formContainer) {
-                    formContainer.scrollIntoView({ behavior: 'smooth' });
-                }
-            } catch (error) {
-                console.error('Erreur lors du chargement de l\'alerte:', error);
-                alert('Impossible de charger l\'alerte. Veuillez réessayer plus tard.');
-            }
-        }
-        
-        // Fonction pour mettre à jour une alerte
-        async function updateAlerte(event) {
-            event.preventDefault();
-            
-            const id = document.getElementById('alerte-id').value;
-            const alerteData = {
-                alerte: document.getElementById('alerte-type').value,
-                niveau: document.getElementById('alerte-niveau').value,
-                description: document.getElementById('alerte-description').value,
-                zone: document.getElementById('alerte-zone').value,
-                debut: document.getElementById('alerte-debut').value,
-                fin: document.getElementById('alerte-fin').value
-            };
-            
-            try {
-                const response = await fetch(`${API_URL}?id=${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(alerteData)
-                });
-                
-                if (response.ok) {
-                    resetForm();
-                    loadAlertes();
-                } else {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Erreur lors de la mise à jour de l\'alerte');
-                }
-            } catch (error) {
-                console.error('Erreur lors de la mise à jour de l\'alerte:', error);
-                alert('Impossible de mettre à jour l\'alerte. Veuillez réessayer plus tard.');
-            }
-        }
-        
-        // Fonction pour supprimer une alerte
-        async function deleteAlerte(id) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer cette alerte ?')) {
+        const API_URL = "https://api-meteo.onrender.com/api/index.php";
+        let adminMode = false;
+        let alertes = [];
+        let currentDeleteId = null;
+
+        // DOM Elements
+        const alerteContent = document.getElementById("alerte-content");
+        const adminToggle = document.getElementById("admin-toggle");
+        const adminModeIndicator = document.getElementById("admin-mode-indicator");
+        const adminControls = document.querySelector(".admin-controls");
+        const addAlerteBtn = document.getElementById("add-alerte-btn");
+        const alerteModal = document.getElementById("alerte-modal");
+        const modalClose = document.getElementById("modal-close");
+        const modalCancel = document.getElementById("modal-cancel");
+        const modalSave = document.getElementById("modal-save");
+        const modalTitle = document.getElementById("modal-title");
+        const alerteForm = document.getElementById("alerte-form");
+        const confirmationModal = document.getElementById("confirmation-modal");
+        const cancelDelete = document.getElementById("cancel-delete");
+        const confirmDelete = document.getElementById("confirm-delete");
+
+        // Form fields
+        const alerteIdInput = document.getElementById("alerte-id");
+        const alerteTypeInput = document.getElementById("alerte-type");
+        const alerteNiveauSelect = document.getElementById("alerte-niveau");
+        const alerteZoneInput = document.getElementById("alerte-zone");
+        const alerteDebutInput = document.getElementById("alerte-debut");
+        const alerteFinInput = document.getElementById("alerte-fin");
+        const alerteDescriptionInput = document.getElementById("alerte-description");
+
+        // Toggle admin mode
+        adminToggle.addEventListener("click", () => {
+            adminMode = !adminMode;
+            adminModeIndicator.classList.toggle("active", adminMode);
+            adminControls.classList.toggle("active", adminMode);
+            chargerAlertes(); // Reload alertes with or without admin controls
+        });
+
+        // Open Add Alerte Modal
+        addAlerteBtn.addEventListener("click", () => {
+            resetForm();
+            modalTitle.textContent = "Ajouter une alerte";
+            alerteModal.classList.remove("hidden");
+        });
+
+        // Close modal events
+        modalClose.addEventListener("click", () => alerteModal.classList.add("hidden"));
+        modalCancel.addEventListener("click", () => alerteModal.classList.add("hidden"));
+
+        // Close confirmation modal
+        cancelDelete.addEventListener("click", () => confirmationModal.classList.add("hidden"));
+
+        // Save Alerte
+        modalSave.addEventListener("click", async () => {
+            if (!validateForm()) {
+                showToast("Veuillez remplir tous les champs requis", "error");
                 return;
             }
-            
+
+            const alerteData = {
+                alerte: alerteTypeInput.value,
+                niveau: alerteNiveauSelect.value,
+                zone: alerteZoneInput.value,
+                debut: formatDateTimeForAPI(alerteDebutInput.value),
+                fin: formatDateTimeForAPI(alerteFinInput.value),
+                description: alerteDescriptionInput.value,
+            };
+
             try {
-                console.log(`Tentative de suppression de l'alerte avec ID: ${id}`);
-                
-                // Créer un objet URL pour gérer correctement l'URL
-                const url = new URL(API_URL);
-                url.searchParams.append('id', id);
-                
-                console.log('URL de suppression:', url.toString());
-                
-                const response = await fetch(url.toString(), {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                
-                console.log('Statut de la réponse:', response.status);
-                
-                if (response.ok) {
-                    console.log('Suppression réussie, rechargement des alertes...');
-                    loadAlertes();
-                    alert('Alerte supprimée avec succès!');
+                let response;
+                let message;
+
+                if (alerteIdInput.value) {
+                    // Update
+                    response = await fetch(`${API_URL}?id=${alerteIdInput.value}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(alerteData)
+                    });
+                    message = "Alerte mise à jour avec succès";
                 } else {
-                    let errorMessage = `Erreur lors de la suppression (${response.status})`;
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.message || errorMessage;
-                    } catch (e) {
-                        console.error('Impossible de lire la réponse JSON:', e);
-                    }
-                    throw new Error(errorMessage);
+                    // Create
+                    response = await fetch(API_URL, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(alerteData)
+                    });
+                    message = "Alerte ajoutée avec succès";
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(message, "success");
+                    alerteModal.classList.add("hidden");
+                    chargerAlertes();
+                } else {
+                    showToast(data.message || "Une erreur est survenue", "error");
                 }
             } catch (error) {
-                console.error('Erreur détaillée lors de la suppression:', error);
-                alert(`Impossible de supprimer l'alerte: ${error.message}`);
+                console.error("Erreur:", error);
+                showToast("Erreur de connexion au serveur", "error");
+            }
+        });
+
+        // Confirm Delete
+        confirmDelete.addEventListener("click", async () => {
+            if (!currentDeleteId) return;
+
+            try {
+                const response = await fetch(`${API_URL}?id=${currentDeleteId}`, {
+                    method: "DELETE"
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast("Alerte supprimée avec succès", "success");
+                    confirmationModal.classList.add("hidden");
+                    chargerAlertes();
+                } else {
+                    showToast(data.message || "Une erreur est survenue lors de la suppression", "error");
+                }
+            } catch (error) {
+                console.error("Erreur:", error);
+                showToast("Erreur de connexion au serveur", "error");
+            }
+        });
+
+        // Load Alertes
+        async function chargerAlertes() {
+            alerteContent.innerHTML = `
+        <div class="loading">
+            <i class="fas fa-spinner"></i>
+            <span>Chargement des données...</span>
+        </div>
+    `;
+
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                // Vérifier si data est un tableau (votre API renvoie directement un tableau)
+                if (Array.isArray(data)) {
+                    alertes = data;
+                    renderAlertes();
+                } else if (data.success && data.alertes) {
+                    // Garder la compatibilité avec le format que vous attendiez initialement
+                    alertes = data.alertes;
+                    renderAlertes();
+                } else {
+                    alerteContent.innerHTML = `
+                <div class="error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Impossible de charger les alertes</span>
+                </div>
+            `;
+                }
+            } catch (error) {
+                console.error("Erreur:", error);
+                alerteContent.innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Erreur de connexion au serveur</span>
+            </div>
+        `;
             }
         }
-        
-        // Fonction pour réinitialiser le formulaire
+        // Render Alertes
+        function renderAlertes() {
+            if (alertes.length === 0) {
+                alerteContent.innerHTML = `
+                    <div class="status-card">
+                        <div class="status-icon" style="color: var(--success)">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3 class="status-title">Aucune alerte en cours</h3>
+                        <p class="status-text">Les conditions météorologiques sont favorables pour les activités maritimes.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+
+            alertes.forEach(alerte => {
+                const niveauClass = getNiveauClass(alerte.niveau);
+                const debutFormatted = formatDate(alerte.debut);
+                const finFormatted = formatDate(alerte.fin);
+
+                html += `
+                    <div class="alerte-container">
+                        ${adminMode ? `
+                            <div class="alerte-actions">
+                                <button class="btn-icon btn-edit" onclick="editAlerte(${alerte.id})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-icon btn-delete" onclick="deleteAlerte(${alerte.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                        <div class="alerte-info">
+                            <div class="alerte-row">
+                                <div class="alerte-label">Type</div>
+                                <div class="alerte-type" style="color: ${niveauClass}">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    ${alerte.alerte}
+                                    <span class="tag" style="background-color: ${niveauClass}">${alerte.niveau}</span>
+                                </div>
+                            </div>
+                            <div class="alerte-row">
+                                <div class="alerte-label">Zone</div>
+                                <div class="alerte-value">${alerte.zone}</div>
+                            </div>
+                            <div class="alerte-row">
+                                <div class="alerte-label">Période</div>
+                                <div class="alerte-value">Du ${debutFormatted} au ${finFormatted}</div>
+                            </div>
+                            <div class="alerte-row">
+                                <div class="alerte-label">Description</div>
+                                <div class="alerte-description">${alerte.description}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            alerteContent.innerHTML = html;
+        }
+
+        // Edit Alerte
+        window.editAlerte = function (id) {
+            const alerte = alertes.find(a => a.id === id);
+            if (!alerte) return;
+
+            alerteIdInput.value = alerte.id;
+            alerteTypeInput.value = alerte.alerte;
+            alerteNiveauSelect.value = alerte.niveau;
+            alerteZoneInput.value = alerte.zone;
+            alerteDebutInput.value = formatDateTimeForInput(alerte.debut);
+            alerteFinInput.value = formatDateTimeForInput(alerte.fin);
+            alerteDescriptionInput.value = alerte.description;
+
+            modalTitle.textContent = "Modifier l'alerte";
+            alerteModal.classList.remove("hidden");
+        };
+
+        // Delete Alerte
+        window.deleteAlerte = function (id) {
+            currentDeleteId = id;
+            confirmationModal.classList.remove("hidden");
+        };
+
+        // Helper Functions
         function resetForm() {
             alerteForm.reset();
-            document.getElementById('alerte-id').value = '';
-            formTitle.textContent = 'Ajouter une nouvelle alerte';
-            formSubmit.textContent = 'Ajouter';
-            formCancel.style.display = 'none';
-            
-            // Restaurer la fonction de soumission par défaut
-            alerteForm.removeEventListener('submit', updateAlerte);
-            alerteForm.addEventListener('submit', addAlerte);
+            alerteIdInput.value = "";
+
+            // Set default datetime values to today and tomorrow
+            const now = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            alerteDebutInput.value = formatDateTimeForInput(now);
+            alerteFinInput.value = formatDateTimeForInput(tomorrow);
         }
-        
-        // Événements
-        window.addEventListener('load', loadAlertes);
-        alerteForm.addEventListener('submit', addAlerte);
-        formCancel.addEventListener('click', resetForm);
+
+        function validateForm() {
+            return alerteTypeInput.value.trim() !== "" &&
+                alerteNiveauSelect.value !== "" &&
+                alerteZoneInput.value.trim() !== "" &&
+                alerteDebutInput.value !== "" &&
+                alerteFinInput.value !== "" &&
+                alerteDescriptionInput.value.trim() !== "";
+        }
+
+        function formatDateTimeForAPI(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        function formatDateTimeForInput(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toISOString().slice(0, 16);
+        }
+
+        function formatDate(dateString) {
+            const options = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('fr-FR', options).replace(',', ' à');
+        }
+
+        function getNiveauClass(niveau) {
+            switch (niveau) {
+                case 'Vert': return '#22c55e';
+                case 'Orange': return '#f97316';
+                case 'Rouge': return '#dc2626';
+                default: return '#64748b';
+            }
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.createElement("div");
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas fa-${type === "success" ? "check-circle" : type === "error" ? "exclamation-circle" : "exclamation-triangle"}"></i>
+                <span>${message}</span>
+            `;
+
+            const toastContainer = document.getElementById("toast-container");
+            toastContainer.appendChild(toast);
+
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                toast.style.animation = "slideOut 0.3s ease forwards";
+                setTimeout(() => {
+                    toastContainer.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener("DOMContentLoaded", () => {
+            chargerAlertes();
+            resetForm();
+        });
     </script>
 </body>
+
 </html>
