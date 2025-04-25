@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Météo Marine - Deauville</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #0077b6;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        main {
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #0077b6;
+            color: white;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #0077b6;
+            color: white;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .niveau-rouge {
+            background-color: #ffcccb;
+        }
+        .niveau-orange {
+            background-color: #ffe4b5;
+        }
+        .niveau-jaune {
+            background-color: #fffacd;
+        }
+        .form-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e0f7fa;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #0077b6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005f8d;
+        }
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+        .btn-edit, .btn-delete {
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+        .btn-edit {
+            background-color: #4caf50;
+        }
+        .btn-delete {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Météo Marine - Deauville</h1>
+        <p>Consultez les alertes marines pour la ville de Deauville</p>
+    </header>
+    <main>
+        <h2>Prochaines Alertes</h2>
+        <div id="alertes-container">
+            <table id="alertes-table">
+                <thead>
+                    <tr>
+                        <th>Type d'Alerte</th>
+                        <th>Niveau</th>
+                        <th>Description</th>
+                        <th>Zone</th>
+                        <th>Début</th>
+                        <th>Fin</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="alertes-body">
+                    <!-- Les alertes seront ajoutées ici dynamiquement -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="form-container" id="form-container">
+            <h3 id="form-title">Ajouter une nouvelle alerte</h3>
+            <form id="alerte-form">
+                <input type="hidden" id="alerte-id">
+                <div class="form-group">
+                    <label for="alerte-type">Type d'Alerte:</label>
+                    <input type="text" id="alerte-type" required>
+                </div>
+                <div class="form-group">
+                    <label for="alerte-niveau">Niveau:</label>
+                    <select id="alerte-niveau" required>
+                        <option value="Rouge">Rouge</option>
+                        <option value="Orange">Orange</option>
+                        <option value="Jaune">Jaune</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alerte-description">Description:</label>
+                    <textarea id="alerte-description" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="alerte-zone">Zone:</label>
+                    <input type="text" id="alerte-zone" required>
+                </div>
+                <div class="form-group">
+                    <label for="alerte-debut">Début:</label>
+                    <input type="datetime-local" id="alerte-debut" required>
+                </div>
+                <div class="form-group">
+                    <label for="alerte-fin">Fin:</label>
+                    <input type="datetime-local" id="alerte-fin" required>
+                </div>
+                <button type="submit" id="form-submit">Ajouter</button>
+                <button type="button" id="form-cancel" style="display: none;">Annuler</button>
+            </form>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2025 Météo Marine Deauville. Tous droits réservés.</p>
+    </footer>
+
+    <script>
+        // Configuration de l'API
+        const API_URL = 'http://localhost:8080/api/index.php';
+        
+        // Éléments du DOM
+        const alertesBody = document.getElementById('alertes-body');
+        const alerteForm = document.getElementById('alerte-form');
+        const formTitle = document.getElementById('form-title');
+        const formSubmit = document.getElementById('form-submit');
+        const formCancel = document.getElementById('form-cancel');
+        
+        // Formatage de date pour l'affichage
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+        }
+        
+        // Formatage de date pour les champs datetime-local
+        function formatDateForInput(dateString) {
+            const date = new Date(dateString);
+            return date.toISOString().slice(0, 16);
+        }
+        
+        // Fonction pour charger les alertes depuis l'API
+        async function loadAlertes() {
+            try {
+                const response = await fetch(API_URL);
+                const alertes = await response.json();
+                
+                // Vider le tableau
+                alertesBody.innerHTML = '';
+                
+                // Ajouter chaque alerte au tableau
+                alertes.forEach(alerte => {
+                    const row = document.createElement('tr');
+                    row.classList.add(`niveau-${alerte.niveau.toLowerCase()}`);
+                    
+                    row.innerHTML = `
+                        <td>${alerte.alerte}</td>
+                        <td>${alerte.niveau}</td>
+                        <td>${alerte.description}</td>
+                        <td>${alerte.zone}</td>
+                        <td>${formatDate(alerte.debut)}</td>
+                        <td>${formatDate(alerte.fin)}</td>
+                        <td class="actions">
+                            <button class="btn-edit" data-id="${alerte.id}">Modifier</button>
+                            <button class="btn-delete" data-id="${alerte.id}">Supprimer</button>
+                        </td>
+                    `;
+                    
+                    alertesBody.appendChild(row);
+                });
+                
+                // Ajouter les gestionnaires d'événements pour les boutons
+                document.querySelectorAll('.btn-edit').forEach(button => {
+                    button.addEventListener('click', () => editAlerte(button.dataset.id));
+                });
+                
+                document.querySelectorAll('.btn-delete').forEach(button => {
+                    button.addEventListener('click', () => deleteAlerte(button.dataset.id));
+                });
+            } catch (error) {
+                console.error('Erreur lors du chargement des alertes:', error);
+                alert('Impossible de charger les alertes. Veuillez réessayer plus tard.');
+            }
+        }
+        
+        // Fonction pour ajouter une nouvelle alerte
+        async function addAlerte(event) {
+            event.preventDefault();
+            
+            const alerteData = {
+                alerte: document.getElementById('alerte-type').value,
+                niveau: document.getElementById('alerte-niveau').value,
+                description: document.getElementById('alerte-description').value,
+                zone: document.getElementById('alerte-zone').value,
+                debut: document.getElementById('alerte-debut').value,
+                fin: document.getElementById('alerte-fin').value
+            };
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(alerteData)
+                });
+                
+                if (response.ok) {
+                    alerteForm.reset();
+                    loadAlertes();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Erreur lors de l\'ajout de l\'alerte');
+                }
+            } catch (error) {
+                console.error('Erreur lors de l\'ajout de l\'alerte:', error);
+                alert('Impossible d\'ajouter l\'alerte. Veuillez réessayer plus tard.');
+            }
+        }
+        
+        // Fonction pour charger une alerte dans le formulaire pour édition
+        async function editAlerte(id) {
+            try {
+                const response = await fetch(`${API_URL}?id=${id}`);
+                const alerte = await response.json();
+                
+                document.getElementById('alerte-id').value = alerte.id;
+                document.getElementById('alerte-type').value = alerte.alerte;
+                document.getElementById('alerte-niveau').value = alerte.niveau;
+                document.getElementById('alerte-description').value = alerte.description;
+                document.getElementById('alerte-zone').value = alerte.zone;
+                document.getElementById('alerte-debut').value = formatDateForInput(alerte.debut);
+                document.getElementById('alerte-fin').value = formatDateForInput(alerte.fin);
+                
+                formTitle.textContent = 'Modifier l\'alerte';
+                formSubmit.textContent = 'Mettre à jour';
+                formCancel.style.display = 'inline-block';
+                
+                // Changer la fonction de soumission du formulaire
+                alerteForm.removeEventListener('submit', addAlerte);
+                alerteForm.addEventListener('submit', updateAlerte);
+                
+                // Faire défiler jusqu'au formulaire
+                formContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Erreur lors du chargement de l\'alerte:', error);
+                alert('Impossible de charger l\'alerte. Veuillez réessayer plus tard.');
+            }
+        }
+        
+        // Fonction pour mettre à jour une alerte
+        async function updateAlerte(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('alerte-id').value;
+            const alerteData = {
+                alerte: document.getElementById('alerte-type').value,
+                niveau: document.getElementById('alerte-niveau').value,
+                description: document.getElementById('alerte-description').value,
+                zone: document.getElementById('alerte-zone').value,
+                debut: document.getElementById('alerte-debut').value,
+                fin: document.getElementById('alerte-fin').value
+            };
+            
+            try {
+                const response = await fetch(`${API_URL}?id=${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(alerteData)
+                });
+                
+                if (response.ok) {
+                    resetForm();
+                    loadAlertes();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Erreur lors de la mise à jour de l\'alerte');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la mise à jour de l\'alerte:', error);
+                alert('Impossible de mettre à jour l\'alerte. Veuillez réessayer plus tard.');
+            }
+        }
+        
+        // Fonction pour supprimer une alerte
+        async function deleteAlerte(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette alerte ?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}?id=${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadAlertes();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Erreur lors de la suppression de l\'alerte');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la suppression de l\'alerte:', error);
+                alert('Impossible de supprimer l\'alerte. Veuillez réessayer plus tard.');
+            }
+        }
+        
+        // Fonction pour réinitialiser le formulaire
+        function resetForm() {
+            alerteForm.reset();
+            document.getElementById('alerte-id').value = '';
+            formTitle.textContent = 'Ajouter une nouvelle alerte';
+            formSubmit.textContent = 'Ajouter';
+            formCancel.style.display = 'none';
+            
+            // Restaurer la fonction de soumission par défaut
+            alerteForm.removeEventListener('submit', updateAlerte);
+            alerteForm.addEventListener('submit', addAlerte);
+        }
+        
+        // Événements
+        window.addEventListener('load', loadAlertes);
+        alerteForm.addEventListener('submit', addAlerte);
+        formCancel.addEventListener('click', resetForm);
+    </script>
+</body>
+</html>
