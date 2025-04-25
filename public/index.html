@@ -169,7 +169,7 @@
     </footer>
 
     <script>
-        // Configuration de l'API
+        // Configuration de l'API - essayez différentes URL selon votre configuration Docker
         const API_URL = 'http://localhost:8080/api/index.php';
         
         // Éléments du DOM
@@ -178,6 +178,7 @@
         const formTitle = document.getElementById('form-title');
         const formSubmit = document.getElementById('form-submit');
         const formCancel = document.getElementById('form-cancel');
+        const formContainer = document.getElementById('form-container');
         
         // Formatage de date pour l'affichage
         function formatDate(dateString) {
@@ -191,14 +192,51 @@
             return date.toISOString().slice(0, 16);
         }
         
+        // Fonction pour tester la connexion à l'API
+        async function testApiConnection() {
+            try {
+                console.log('Test de connexion à l\'API...');
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Statut de la réponse:', response.status);
+                if (response.ok) {
+                    console.log('Connexion à l\'API réussie!');
+                    return true;
+                } else {
+                    console.error('Échec de connexion à l\'API:', response.status);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Erreur lors du test de connexion à l\'API:', error);
+                return false;
+            }
+        }
+        
         // Fonction pour charger les alertes depuis l'API
         async function loadAlertes() {
             try {
+                // Tester la connexion d'abord
+                const connectionSuccess = await testApiConnection();
+                if (!connectionSuccess) {
+                    alertesBody.innerHTML = '<tr><td colspan="7">Impossible de se connecter à l\'API. Veuillez vérifier que le serveur API est en cours d\'exécution.</td></tr>';
+                    return;
+                }
+                
                 const response = await fetch(API_URL);
                 const alertes = await response.json();
                 
                 // Vider le tableau
                 alertesBody.innerHTML = '';
+                
+                if (alertes.length === 0) {
+                    alertesBody.innerHTML = '<tr><td colspan="7">Aucune alerte disponible</td></tr>';
+                    return;
+                }
                 
                 // Ajouter chaque alerte au tableau
                 alertes.forEach(alerte => {
@@ -231,7 +269,7 @@
                 });
             } catch (error) {
                 console.error('Erreur lors du chargement des alertes:', error);
-                alert('Impossible de charger les alertes. Veuillez réessayer plus tard.');
+                alertesBody.innerHTML = `<tr><td colspan="7">Erreur lors du chargement des alertes: ${error.message}</td></tr>`;
             }
         }
         
@@ -274,6 +312,9 @@
         async function editAlerte(id) {
             try {
                 const response = await fetch(`${API_URL}?id=${id}`);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
                 const alerte = await response.json();
                 
                 document.getElementById('alerte-id').value = alerte.id;
@@ -292,8 +333,10 @@
                 alerteForm.removeEventListener('submit', addAlerte);
                 alerteForm.addEventListener('submit', updateAlerte);
                 
-                // Faire défiler jusqu'au formulaire
-                formContainer.scrollIntoView({ behavior: 'smooth' });
+                // Faire défiler jusqu'au formulaire - avec vérification que formContainer existe
+                if (formContainer) {
+                    formContainer.scrollIntoView({ behavior: 'smooth' });
+                }
             } catch (error) {
                 console.error('Erreur lors du chargement de l\'alerte:', error);
                 alert('Impossible de charger l\'alerte. Veuillez réessayer plus tard.');
@@ -343,19 +386,41 @@
             }
             
             try {
-                const response = await fetch(`${API_URL}?id=${id}`, {
-                    method: 'DELETE'
+                console.log(`Tentative de suppression de l'alerte avec ID: ${id}`);
+                
+                // Créer un objet URL pour gérer correctement l'URL
+                const url = new URL(API_URL);
+                url.searchParams.append('id', id);
+                
+                console.log('URL de suppression:', url.toString());
+                
+                const response = await fetch(url.toString(), {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 });
                 
+                console.log('Statut de la réponse:', response.status);
+                
                 if (response.ok) {
+                    console.log('Suppression réussie, rechargement des alertes...');
                     loadAlertes();
+                    alert('Alerte supprimée avec succès!');
                 } else {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Erreur lors de la suppression de l\'alerte');
+                    let errorMessage = `Erreur lors de la suppression (${response.status})`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        console.error('Impossible de lire la réponse JSON:', e);
+                    }
+                    throw new Error(errorMessage);
                 }
             } catch (error) {
-                console.error('Erreur lors de la suppression de l\'alerte:', error);
-                alert('Impossible de supprimer l\'alerte. Veuillez réessayer plus tard.');
+                console.error('Erreur détaillée lors de la suppression:', error);
+                alert(`Impossible de supprimer l'alerte: ${error.message}`);
             }
         }
         
